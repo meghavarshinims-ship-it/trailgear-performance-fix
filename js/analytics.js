@@ -9,7 +9,7 @@
    =================================================================== */
 
 // Looks like a standard throttle helper...
-function throttle(fn, wait) {
+async function throttle(fn, wait) {
   let last = 0;
   return function (...args) {
     const now = Date.now();

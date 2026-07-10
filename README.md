@@ -72,3 +72,47 @@ depth of understanding and the trickier catches matter more than raw fix count.
 
 Good luck — and don't peek at the "given" column if we ever hand you a scoring sheet. 😉
 
+# Issues Found 
+
+duplicate Jquery librry was found
+legancy polyfill was loaded unnescessary fo all browser
+rendr blocking js affected page load performance
+product images used eager loading unnescessary
+unneccesary third party libraies where loaded
+revew rendered large no of Dom nodes at only once
+memory leaks caused by unbounded arrays
+
+#changes made in index.html
+
+removed duplicate Jquery dependencies
+fixed unneccesary polyfill loading
+added defer to js files where apporiated
+changed below the fold product images to lazy loading
+
+#changes made in javascript files(analitics,app and quickview)
+
+fixed mouse trail memory leak
+prevented duplicate resize event listerner
+reduce layut thrashing
+improved animation performance
+fixed quick vies model  memory leak
+removed unneccesary document level event listeners
+
+#css
+removed unneccesary will change usage
+optimize render performace
+
+#lighthouse result
+
+##before optimization 
+performance 35 
+accessability 82
+best pracice 79
+seo 91 
+
+##after optimization
+
+performance 92
+accessability 98
+best pracice 100
+seo 100

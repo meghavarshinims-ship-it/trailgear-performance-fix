@@ -13,25 +13,28 @@ $(document).ready(function () {
 // a classic memory leak. Every mousemove event pushes a new object and
 // nothing ever removes old ones, so retained memory climbs for as long
 // as the tab stays open.
+const  MAX_MOUSE_TRAIL = 200;
 const mouseTrail = [];
 window.addEventListener('mousemove', function (e) {
   mouseTrail.push({ x: e.clientX, y: e.clientY, t: performance.now(), el: e.target });
 });
-
+if (mouseTrail.length > MAX_MOUSE_TRAIL){
+  mouseTrail.shift();
+}
 // --- BUG: a resize handler that is re-registered on every call to
 // initGallery() instead of once. Every window resize therefore adds
 // ANOTHER listener on top of all previous ones, so work done per-resize
 // grows over the life of the page (also a leak).
-function initGallery() {
-  window.addEventListener('resize', function () {
-    document.querySelectorAll('.product-card').forEach(function (card) {
-      // no-op-ish work, but multiplied by (leaked listener count) it adds up
-      card.style.transform = 'translateZ(0)';
-    });
-  });
+
+ 
+
+function handleResize() {
+      document.querySelectorAll('.product-card').forEach(function (card) {
+ card.style.transform = 'translateZ(0)';
+});
 }
-initGallery();
-document.addEventListener('DOMContentLoaded', initGallery); // called again -> compounds the leak
+  window.addEventListener('resize', handleResize);
+
 
 // --- BUG: layout thrashing. For every card we read a layout property
 // (offsetHeight) and then immediately write a style, interleaved, forcing
@@ -42,27 +45,27 @@ function equalizeCardHeights() {
   cards.forEach(function (card) {
     const h = card.offsetHeight;           // READ (forces layout)
     card.style.minHeight = h + 2 + 'px';   // WRITE
-    const h2 = card.offsetHeight;          // READ again (forces layout again)
     card.querySelector('.info').style.paddingTop = (h2 % 5) + 'px'; // WRITE
   });
 }
-window.addEventListener('scroll', equalizeCardHeights); // no throttling/debouncing at all
+window.addEventListener('load', equalizeCardHeights); // no throttling/debouncing at all
+window.addEventListener('resize', equalizeCardHeights);
 
 // --- BUG: blocking synchronous XHR on the main thread to fetch "reviews".
 // This freezes rendering/input until the (artificially slow) request
 // completes. Should be an async fetch().
-function loadReviewsSync() {
-  const xhr = new XMLHttpRequest();
-  xhr.open('GET', 'data/reviews.json', false); // false = synchronous
-  xhr.send(null);
-  return JSON.parse(xhr.responseText);
+
+async function loadReviews(){
+  const response = await fetch('data/reviews.json');
+  return await response.json();
 }
+  
 
 // --- BUG: renders thousands of DOM nodes in one go with no pagination
 // or virtualization, and does it with wasteful innerHTML += in a loop
 // (which re-parses the growing string every iteration).
-function renderReviews() {
-  const reviews = loadReviewsSync();
+async function renderReviews() {
+  const reviews = loadReviews();
   const list = document.getElementById('review-list');
   let html = '';
   for (let i = 0; i < reviews.length; i++) {
@@ -70,8 +73,9 @@ function renderReviews() {
     html += '<div class="review-item"><strong>' + reviews[i].name +
       '</strong> <span class="stars">' + '★'.repeat(reviews[i].rating) +
       '</span><p>' + reviews[i].text + '</p></div>';
-    list.innerHTML = html;
+   
   }
+   list.innerHTML = html;
 }
 
 // --- BUG: canvas "particle" background animated with setInterval at an
@@ -85,10 +89,10 @@ function startParticles() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  setInterval(function () {
+  function animate () {
     // Recreated from scratch every tick — unnecessary allocation churn.
     const particles = [];
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < 200; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -102,8 +106,11 @@ function startParticles() {
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.fill();
     });
-  }, 16); // ~60 times/sec via setInterval instead of requestAnimationFrame
+    requestAnimationFrame(animate);
 }
+}
+ animate();
+
 
 // --- Lightweight, honest performance HUD so you can SEE the impact of
 // the bugs above (and confirm improvement after fixing them). This part
@@ -139,8 +146,8 @@ function startPerfHud() {
   requestAnimationFrame(tick);
 }
 
-window.addEventListener('load', function () {
-  renderReviews();
+window.addEventListener('load', async function () {
+ await renderReviews();
   startParticles();
   startPerfHud();
 });

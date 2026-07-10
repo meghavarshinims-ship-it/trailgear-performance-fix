@@ -32,6 +32,12 @@ function openQuickView(card) {
     '</div>';
 
   document.body.appendChild(overlay);
+   document.addEventListener('click', function outsideClickHandler(e) {
+    if (e.target === overlay) {
+      closeQuickView(overlay);
+    }
+  });
+ 
 
   // BUG: a fresh click-outside-to-close listener is added on `document`
   // every single time a Quick View is opened, and it is never removed
@@ -39,11 +45,7 @@ function openQuickView(card) {
   // Open/close a few times and every past overlay's listener is still
   // live, still running its full logic on every future click anywhere
   // on the page.
-  document.addEventListener('click', function outsideClickHandler(e) {
-    if (e.target === overlay) {
-      closeQuickView(overlay);
-    }
-  });
+ 
 
   overlay.querySelector('.quickview-close').addEventListener('click', function () {
     closeQuickView(overlay);

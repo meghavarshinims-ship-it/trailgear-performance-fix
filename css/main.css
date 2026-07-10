@@ -28,7 +28,7 @@
      extra paint cost, and janky transitions on things that were never
      meant to animate at all. */
   transition: all 0.4s ease;
-  will-change: transform, opacity;
+  will-change: transform;
 }
 
 body {
